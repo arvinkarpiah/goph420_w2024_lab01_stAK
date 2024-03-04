@@ -1,33 +1,55 @@
-#Test integrate_gauss() by designing unit tests in which data is generated from polynomials up to order n = 9 and 
-#showing that the function can get the exact result with an appropriate option for npts. You may also try to write 
-#unit tests for polynomial and non-polynomial functions comparing results with scipy.integrate.fixed_quad() which has the 
-#parameter n for the number of integration points, but this is not mandatory. Implement any tests in tests/test_gauss_legendre.py 
-#as described previously.
+#Tnhis script does the following:
+
+#1. Creates a function that generates polynomials up to order of 9
+#2. Tests the integrate_gauss function for polynomials up to order of 9
+#3. Prints the result as a way to double check.
 
 import unittest
+import random
+import math
 import numpy as np
+from scipy.integrate import fixed_quad
 import sys
 sys.path.append('/Users/arvinkarpiah/Desktop/GOPH420/Lab_01/Repository/goph420_w2024_lab01_stAK/src')
 from goph420_lab01 import integration
 from goph420_lab01.integration import integrate_gauss
 
-# Data to test
+# Create a function that generates polynomials of order n in the pattern x^n + x^n-1 + x^n-2 +....+x^(n-n)
+def polynomial_generator(x, n):
+        result = np.zeros_like(x)
+        for i in range(n + 1):
+            result += x ** i
+        return result
+    
+    # Define integral function
+def get_integral_function(j):
+    return lambda x: polynomial_generator(x, j)
 
-# Dataset with even number of points to test for trapezium and Simpson's rule
-
-def f(x, dx):
-    result = (0.2 + 25 * x - 200 * x ** 2 + 675 * x ** 3 - 900 * x ** 4 + 400 * x ** 5) * dx
+def F(t): 
+    
+    result = 1-math.exp((-12.5/68.1)*t)
     return result
 
-import unittest
+# Generate bounds of integration
+a=0
+b=2
+# Perform test
+class TestIntegrationGauss(unittest.TestCase):
+    def test_integrate_gauss_polynomial(self):
+        for j in range(10):
+            integral = get_integral_function(j)
+            exact_integral, _ = fixed_quad(integral, a, b)
+            computed_integral = integrate_gauss(integral,[a,b], 5) 
+            self.assertAlmostEqual(computed_integral, exact_integral,delta=1e-3)
+            print('for n=',j,'exact_integral is',exact_integral,'and computed integral is',computed_integral)
 
-class TestIntegration(unittest.TestCase):
-     
-    # Testing integrate_gauss for npts=2
-    def test_integrategauss(self):
-        exact_integral =   0.90 #1.822578
-        self.assertAlmostEqual(integrate_gauss(f, [0, 0.8], 2), exact_integral, delta=1e-4)
-       
+    def test_integrate_gauss_example_from_book(self):
+         E = (9.8*68.1/12.5)*(integrate_gauss(F,[0,10], 5))
+         self.assertAlmostEqual(E, 289.4351,delta=1e-3)
+         print(E)
 
+            
 if __name__ == '__main__':
     unittest.main()
+
+
